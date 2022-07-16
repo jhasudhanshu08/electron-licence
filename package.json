@@ -1,0 +1,18 @@
+{
+  "name": "electron-licence(7)",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "electron": "^19.0.8",
+    "express": "^4.18.1",
+    "mongoose": "^6.4.4"
+  }
+}
