@@ -1,4 +1,6 @@
-const { ipcRenderer } = require('electron')
+const { ipcRenderer } = require('electron');
+const fs = require("fs");
+const readline = require("readline");
  
 window.addEventListener('DOMContentLoaded', () => {
   const gate = document.getElementById('license-gate')
@@ -8,7 +10,20 @@ window.addEventListener('DOMContentLoaded', () => {
  
     const data = new FormData(gate)
     const key = data.get('key')
+
+  //   fs.writeFileSync('licence.txt', key, err => {
+  //     console.log("gate key", key)
+  //     if(err) {
+  //         console.log("error");
+  //     }
+  // })
  
-    ipcRenderer.send('GATE_SUBMIT', { key })
+    // setTimeout();
+    // console.log(key);
+    // sleep(5000).then(() => {
+      ipcRenderer.send('GATE_SUBMIT', { key })
+      console.log("gatejs ", key);
+    // })
+    
   })
 })

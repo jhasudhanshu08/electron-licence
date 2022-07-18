@@ -1,87 +1,147 @@
-const { app, dialog, BrowserWindow, ipcMain } = require('electron');
+const { app, dialog, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
-const server = require("./server")
- 
-const isDev = process.env.NODE_ENV === 'development'
-const key1 = "1234567";
+const fs = require("fs");
 
+const server = require("./server");
 
-const validateLicenseKey = (key) => {
-    if(key == key1) {
-        return "VALID"
-    }
-    else {
-        return "ERROR"
-    }
-}
- 
-function createWindow() {
-  const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    webPreferences: {
-      devTools: isDev,
-    }
-  })
- 
-  mainWindow.loadFile('index.html')
-}
+var licenceCreate = async () => {
+  let res = {
+    status: false,
+    data: null,
+  };
+  try {
+    let data = fs.readFileSync("./licence.txt", "utf-8");
+    console.log("readfile", data);
+    res.data = data;
+    res.status = true;
+    return res;
+  } catch {
+    (err) => {
+      console.log(err);
+      res.status = false;
+      return res;
+    };
+    console.log("response", res);
+  }
+};
 
+const testing = async () => {
+  if (fs.existsSync("./licence.txt")) {
+    function createWindow() {
+      const mainWindow = new BrowserWindow({
+        width: 800,
+        height: 600,
+        webPreferences: {
+          // devTools: isDev,
+          nodeIntegration: true,
+        },
+      });
+      mainWindow.webContents.openDevTools();
 
-async function gateCreateWindowWithLicense(createWindow) { 
-    const gateWindow = new BrowserWindow({
-      resizable: false,
-      frame: false,
-      width: 420,
-      height: 200,
-      webPreferences: {
-        preload: path.join(__dirname, 'gate.js'),
-        devTools: isDev,
-      },
-    })
-   
-    gateWindow.loadFile('gate.html')
-   
-    if (isDev) {
-      gateWindow.webContents.openDevTools({ mode: 'detach' })
+      mainWindow.loadFile("index.html");
     }
 
-    ipcMain.on('GATE_SUBMIT', async (_event, { key }) => { 
-        const code = await validateLicenseKey(key) 
- 
-            switch (code) {
-                case 'VALID':
-                // Close the license gate window
-                gateWindow.close()
+    app.whenReady().then(() => createWindow());
+  } else {
+    // const key1 = fs.readFile('licence.txt', 'utf8', (err, data) => {
+    //   return data;
+    // })
 
-                // Create our main window
-                createWindow()
+    // const key1 = await licenceCreate();
 
-                break
-                case 'ERROR':
+    const validateLicenseKey = async (key, key1) => {
+      console.log("key1 : ", key1);
+      console.log("key : ", key);
 
-                    const choice = await dialog.showMessageBox(gateWindow, {
-                        type: 'error',
-                        title: 'Your license is invalid',
-                        message: 'The license key you entered does not exist for this product. Would you like to buy a license?',
-                        detail: `Error code: ${code ?? res.status}`,
-                        buttons: [
-                          'Continue evaluation',
-                          'Try again',
-                          'Buy a license',
-                        ],
-                      })
-                // Exit the application
-                // app.exit(1)
+      if (key1.status) {
+        if (key == key1.data) {
+          return "VALID";
+        } else {
+          return "ERROR";
+        }
+      } else {
+        return "ERROR";
+      }
+    };
 
-                break
-            }
-      }) 
-   
-    // TODO(ezekg) Create main window for valid licenses
-  } 
- 
+    function createWindow() {
+      const mainWindow = new BrowserWindow({
+        width: 800,
+        height: 600,
+        webPreferences: {
+          // devTools: isDev,
+          nodeIntegration: true,
+        },
+      });
+      mainWindow.webContents.openDevTools();
+
+      mainWindow.loadFile("index.html");
+    }
+
+    async function gateCreateWindowWithLicense(createWindow) {
+      const gateWindow = new BrowserWindow({
+        resizable: false,
+        frame: false,
+        width: 420,
+        height: 200,
+        webPreferences: {
+          preload: path.join(__dirname, "gate.js"),
+          // devTools: isDev,
+          nodeIntegration: true,
+        },
+      });
+
+      gateWindow.loadFile("gate.html");
+
+      // setTimeout(waitTime, 5000);
+
+      ipcMain.on("GATE_SUBMIT", async (_event, { key }) => {
+        // const code = setTimeout( validateLicenseKey(key), 5000);
+
+        fs.writeFileSync("licence.txt", key, (err) => {
+          if (err) {
+            console.log("error");
+          }
+        });
+        console.log("gate key", key);
+        const key1 = await licenceCreate();
+
+        const code = await validateLicenseKey(key, key1);
+        console.log("code ", code);
+
+        switch (code) {
+          case "VALID":
+            // Close the license gate window
+            gateWindow.close();
+
+            // Create our main window
+            createWindow();
+
+            break;
+          case "ERROR":
+            const choice = await dialog.showMessageBox(gateWindow, {
+              type: "error",
+              title: "Your license is invalid",
+              message:
+                "The license key you entered does not exist for this product. Would you like to buy a license?",
+              detail: `Error code: ${code ?? res.status}`,
+              buttons: ["Continue evaluation", "Try again", "Buy a license"],
+            });
+            // Exit the application
+            // app.exit(1)
+
+            break;
+        }
+      });
+
+      // TODO(ezekg) Create main window for valid licenses
+    }
+    app.whenReady().then(() => gateCreateWindowWithLicense(createWindow));
+  }
+};
+
 // app.whenReady().then(() => createWindow());
-app.whenReady().then(() => gateCreateWindowWithLicense(createWindow));
- 
-app.on('window-all-closed', () => app.quit())
+
+testing();
+
+app.on("window-all-closed", () => app.quit());

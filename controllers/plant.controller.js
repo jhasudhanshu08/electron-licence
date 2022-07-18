@@ -1,13 +1,19 @@
 const express = require("express");
 const router = express.Router();
-const Plant = require("../services/plant.service");
+const PlantService = require("../services/plant.service");
+const Plant = require("../models/plant.model");
 
-router.use("/check", checkData = async(req, res) => {
+exports.check = async(req, res) => {
         console.log(req.body);
         console.log(req.params);
         console.log(req.query);
 
-        Plant.checkDataService(req.body.plantId)
+        Plant({
+            plantId: req.body.key
+        })
+        console.log("aaaaaaaaaaaaaaa", Plant)
+
+        PlantService.checkDataService(Plant)
 
         .then((response)=>{
             console.log(response)
@@ -27,6 +33,6 @@ router.use("/check", checkData = async(req, res) => {
             });
         });
     
-})
+}
 
-module.exports = router;
+// module.exports = router;

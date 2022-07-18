@@ -1,7 +1,14 @@
 const Plant = require("../models/plant.model");
 
 exports.checkDataService = async(plantId) => {
-    console.log(plantId);
+
+
+    // let newPlantId = new Plant({
+    //     plantId: req.body.key
+    // })
+
+    // console.log("aaaaaaaaaaaaaaaaaa", newPlantId);
+
     try{
         let response = {
             status: false
