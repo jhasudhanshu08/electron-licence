@@ -2,21 +2,19 @@ const express = require("express");
 const router = express.Router();
 const PlantService = require("../services/plant.service");
 const Plant = require("../models/plant.model");
+const fs = require("fs");
+
 
 exports.check = async(req, res) => {
-        console.log(req.body);
-        console.log(req.params);
-        console.log(req.query);
+        // console.log("body", req.body);
+        // console.log("params", req.params);
+        // console.log("query", req.query);
+        let data = fs.readFileSync("./licence.json", "utf-8");
+        let result = JSON.parse(data);
 
-        Plant({
-            plantId: req.body.key
-        })
-        console.log("aaaaaaaaaaaaaaa", Plant)
-
-        PlantService.checkDataService(Plant)
-
+        PlantService.checkDataService(result.key)
         .then((response)=>{
-            console.log(response)
+            console.log("response++++++", response)
             if(!response.status){
                 throw new Error(response.message); 
             }     
@@ -34,5 +32,3 @@ exports.check = async(req, res) => {
         });
     
 }
-
-// module.exports = router;
