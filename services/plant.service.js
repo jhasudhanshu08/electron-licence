@@ -16,15 +16,29 @@ exports.checkDataService = async(key) => {
         console.log("plant", plant);
         if(!plant) {
             // console.log("not plant")
+            const obj = JSON.stringify({
+                key: "Licence not matched !!",
+                status: false
+
+            })
+
+            fs.writeFileSync("licence.json", obj, (err) => {
+                console.log("xxxxxxxx")
+                if (err) {
+                  console.log("error");
+                }
+              });
+              let obj1 = JSON.parse(obj)
+              response.status = false;
+              response.response = obj1.key;
+              console.log("///////////////", response)
+
+
             throw new Error ("PLant Id is not found !!")
         }
         else {
             console.log("else .....")
-            // const licence = new Licence({
-            //     plantId: plant.plantId,
-            //     status: true
-            // })
-            // licence.save();
+        
 
             const obj = JSON.stringify({
                 key: plant.plantId,

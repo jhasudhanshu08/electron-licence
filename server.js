@@ -18,7 +18,13 @@ app.use(express.urlencoded({ limit: "16mb", extended: true, parameterLimit: 5000
 
 // app.use(remote.check());
 // one();
-remote.check(req, res)
+console.log("server......")
+exports.one = async() => {
+    console.log("api testing +++++++++++++++")
+    await remote.check();
+}
+console.log("server2......")
+
 
 
 app.listen(3000, () => {

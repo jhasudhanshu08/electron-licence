@@ -37,22 +37,33 @@
 // console.log(sha1sum)
 
 
-const fs = require("fs");
+// const fs = require("fs");
 
 
-const one = {
-    key: "hello",
-    status: true
-}
+// const one = {
+//     key: "hello",
+//     status: true
+// }
 
-var two = JSON.stringify(one)
+// var two = JSON.stringify(one)
 
-fs.writeFileSync("licence7.json", two, (err) => {
-    if (err) {
-      console.log("error");
-    }
-  });
+// fs.writeFileSync("licence7.json", two, (err) => {
+//     if (err) {
+//       console.log("error");
+//     }
+//   });
 
-  let data = fs.readFileSync("./licence7.json", "utf-8");
-  let result =  JSON.parse(data);
-  console.log(result.key)
+//   let data = fs.readFileSync("./licence7.json", "utf-8");
+//   let result =  JSON.parse(data);
+//   console.log(result.key)
+
+const crypto = require('crypto');
+const fs = require('fs');
+
+const fileBuffer = fs.readFileSync('licence7.json');
+const hashSum = crypto.createHash('sha256');
+hashSum.update(fileBuffer);
+
+const hex = hashSum.digest('hex');
+
+console.log(hex);

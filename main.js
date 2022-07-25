@@ -4,17 +4,21 @@ const fs = require("fs");
 
 const server = require("./server");
 
-var licenceCreate = async () => {
+var licenceCreate = () => {
   let res = {
     status: false,
     data: null,
   };
   try {
-    let data = JSON.parse(fs.readFileSync("./licence.json", "utf-8"));
+    let data = JSON.parse(fs.readFileSync("./licence.json", "utf-8"))
+    
     // console.log("+++++++++++++", JSON.parse(data.key.value))
     // console.log("readfile11111", JSON.parse(data.key));
+    console.log("testing key1 value : ", data.key);
     res.data = data.key;
-    res.status = true;
+    res.status = data.status;
+    console.log("testing key1 value : ", res);
+
     return res;
   } catch {
     (err) => {
@@ -27,7 +31,7 @@ var licenceCreate = async () => {
 };
 
 const testing = async () => {
-  if (fs.existsSync("./licence.txt")) {
+  if (fs.existsSync("./licence.json")) {
     function createWindow() {
       const mainWindow = new BrowserWindow({
         width: 800,
@@ -50,7 +54,7 @@ const testing = async () => {
 
     // const key1 = await licenceCreate();
 
-    const validateLicenseKey = async (key, key1) => {
+    const validateLicenseKey = (key, key1) => {
       console.log("key1 : ", key1);
       console.log("key : ", key);
 
@@ -96,11 +100,11 @@ const testing = async () => {
 
       // setTimeout(waitTime, 5000);
 
-      ipcMain.on("GATE_SUBMIT", async (_event, { key }) => {
+      ipcMain.on("GATE_SUBMIT", async (_event, { key, status }) => {
         // const code = setTimeout( validateLicenseKey(key), 5000);
         const obj = JSON.stringify({
           key: key,
-          status: true
+          status: status
         })
 
         fs.writeFileSync("licence.json", obj, (err) => {
@@ -108,41 +112,82 @@ const testing = async () => {
             console.log("error");
           }
         });
+        server.one();
+
         console.log("gate key", key);
-        const key1 = await licenceCreate();
+        // const key1 = setTimeout(licenceCreate, 5000)
+        const key1 = setTimeout(() => {
+            licenceCreate()
+        }, 1000);
+        // clearTimeout(key1);
+        setTimeout(async () => {
+          console.log("key1 ++++++++", key1)
+          const code = validateLicenseKey(key, key1);
+          console.log("code ", code);
+  
+          switch (code) {
+            case "VALID":
+              // Close the license gate window
+              gateWindow.close();
+  
+              // Create our main window
+              createWindow();
+  
+              // fs.writeFileSync("licence.txt", "sudhanshu", (err) => {
+              //   if (err) {
+              //     console.log("error");
+              //   }
+              // });
+  
+              break;
+            case "ERROR":
+              const choice = await dialog.showMessageBox(gateWindow, {
+                type: "error",
+                title: "Your license is invalid",
+                message:
+                  "The license key you entered does not exist for this product. Would you like to buy a license?",
+                detail: `Error code: ${code ?? res.status}`,
+                buttons: ["Continue evaluation", "Try again", "Buy a license"],
+              });
+              // Exit the application
+              // app.exit(1)
+  
+              break;
+          }
+        }, 5000)
+        // console.log("key1 ++++++++", key1)
+        // const code = validateLicenseKey(key, key1);
+        // console.log("code ", code);
 
-        const code = await validateLicenseKey(key, key1);
-        console.log("code ", code);
+        // switch (code) {
+        //   case "VALID":
+        //     // Close the license gate window
+        //     gateWindow.close();
 
-        switch (code) {
-          case "VALID":
-            // Close the license gate window
-            gateWindow.close();
+        //     // Create our main window
+        //     createWindow();
 
-            // Create our main window
-            createWindow();
+        //     // fs.writeFileSync("licence.txt", "sudhanshu", (err) => {
+        //     //   if (err) {
+        //     //     console.log("error");
+        //     //   }
+        //     // });
 
-            // fs.writeFileSync("licence.txt", "sudhanshu", (err) => {
-            //   if (err) {
-            //     console.log("error");
-            //   }
-            // });
+        //     break;
+        //   case "ERROR":
+        //     const choice = await dialog.showMessageBox(gateWindow, {
+        //       type: "error",
+        //       title: "Your license is invalid",
+        //       message:
+        //         "The license key you entered does not exist for this product. Would you like to buy a license?",
+        //       detail: `Error code: ${code ?? res.status}`,
+        //       buttons: ["Continue evaluation", "Try again", "Buy a license"],
+        //     });
+        //     // Exit the application
+        //     // app.exit(1)
 
-            break;
-          case "ERROR":
-            const choice = await dialog.showMessageBox(gateWindow, {
-              type: "error",
-              title: "Your license is invalid",
-              message:
-                "The license key you entered does not exist for this product. Would you like to buy a license?",
-              detail: `Error code: ${code ?? res.status}`,
-              buttons: ["Continue evaluation", "Try again", "Buy a license"],
-            });
-            // Exit the application
-            // app.exit(1)
-
-            break;
-        }
+        //     break;
+        // }
       });
 
       // TODO(ezekg) Create main window for valid licenses

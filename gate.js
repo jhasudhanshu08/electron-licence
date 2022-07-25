@@ -10,6 +10,7 @@ window.addEventListener('DOMContentLoaded', () => {
  
     const data = new FormData(gate)
     const key = data.get('key')
+    const status = true
 
   //   fs.writeFileSync('licence.txt', key, err => {
   //     console.log("gate key", key)
@@ -21,7 +22,7 @@ window.addEventListener('DOMContentLoaded', () => {
     // setTimeout();
     // console.log(key);
     // sleep(5000).then(() => {
-      ipcRenderer.send('GATE_SUBMIT', { key })
+      ipcRenderer.send('GATE_SUBMIT', { key, status })
       console.log("gatejs ", key);
     // })
     
