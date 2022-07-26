@@ -1,87 +1,203 @@
-const { app, dialog, BrowserWindow, ipcMain } = require('electron');
+const { app, dialog, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
-const server = require("./server")
- 
-const isDev = process.env.NODE_ENV === 'development'
-const key1 = "1234567";
+const fs = require("fs");
 
+const server = require("./server");
 
-const validateLicenseKey = (key) => {
-    if(key == key1) {
-        return "VALID"
+var licenceCreate = () => {
+  let res = {
+    status: false,
+    data: null,
+  };
+  try {
+    let data = JSON.parse(fs.readFileSync("./licence.json", "utf-8"))
+    
+    // console.log("+++++++++++++", JSON.parse(data.key.value))
+    // console.log("readfile11111", JSON.parse(data.key));
+    console.log("testing key1 value : ", data.key);
+    res.data = data.key;
+    res.status = data.status;
+    console.log("testing key1 value : ", res);
+
+    return res;
+  } catch {
+    (err) => {
+      console.log(err);
+      res.status = false;
+      return res;
+    };
+    console.log("response", res);
+  }
+};
+
+const testing = async () => {
+  if (fs.existsSync("./licence.json")) {
+    function createWindow() {
+      const mainWindow = new BrowserWindow({
+        width: 800,
+        height: 600,
+        webPreferences: {
+          // devTools: isDev,
+          nodeIntegration: true,
+        },
+      });
+      mainWindow.webContents.openDevTools();
+
+      mainWindow.loadFile("index.html");
     }
-    else {
-        return "ERROR"
+
+    app.whenReady().then(() => createWindow());
+  } else {
+    // const key1 = fs.readFile('licence.txt', 'utf8', (err, data) => {
+    //   return data;
+    // })
+
+    // const key1 = await licenceCreate();
+
+    const validateLicenseKey = (key, key1) => {
+      console.log("key1 : ", key1);
+      console.log("key : ", key);
+
+      if (key1.status) {
+        if (key == key1.data) {
+          return "VALID";
+        } else {
+          return "ERROR";
+        }
+      } else {
+        return "ERROR";
+      }
+    };
+
+    function createWindow() {
+      const mainWindow = new BrowserWindow({
+        width: 800,
+        height: 600,
+        webPreferences: {
+          // devTools: isDev,
+          nodeIntegration: true,
+        },
+      });
+      mainWindow.webContents.openDevTools();
+
+      mainWindow.loadFile("index.html");
     }
-}
- 
-function createWindow() {
-  const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    webPreferences: {
-      devTools: isDev,
+
+    async function gateCreateWindowWithLicense(createWindow) {
+      const gateWindow = new BrowserWindow({
+        resizable: false,
+        frame: false,
+        width: 420,
+        height: 200,
+        webPreferences: {
+          preload: path.join(__dirname, "gate.js"),
+          // devTools: isDev,
+          nodeIntegration: true,
+        },
+      });
+
+      gateWindow.loadFile("gate.html");
+
+      // setTimeout(waitTime, 5000);
+
+      ipcMain.on("GATE_SUBMIT", async (_event, { key, status }) => {
+        // const code = setTimeout( validateLicenseKey(key), 5000);
+        const obj = JSON.stringify({
+          key: key,
+          status: status
+        })
+
+        fs.writeFileSync("licence.json", obj, (err) => {
+          if (err) {
+            console.log("error");
+          }
+        });
+        server.one();
+
+        console.log("gate key", key);
+        // const key1 = setTimeout(licenceCreate, 5000)
+        const key1 = setTimeout(() => {
+            licenceCreate()
+        }, 1000);
+        // clearTimeout(key1);
+        setTimeout(async () => {
+          console.log("key1 ++++++++", key1)
+          const code = validateLicenseKey(key, key1);
+          console.log("code ", code);
+  
+          switch (code) {
+            case "VALID":
+              // Close the license gate window
+              gateWindow.close();
+  
+              // Create our main window
+              createWindow();
+  
+              // fs.writeFileSync("licence.txt", "sudhanshu", (err) => {
+              //   if (err) {
+              //     console.log("error");
+              //   }
+              // });
+  
+              break;
+            case "ERROR":
+              const choice = await dialog.showMessageBox(gateWindow, {
+                type: "error",
+                title: "Your license is invalid",
+                message:
+                  "The license key you entered does not exist for this product. Would you like to buy a license?",
+                detail: `Error code: ${code ?? res.status}`,
+                buttons: ["Continue evaluation", "Try again", "Buy a license"],
+              });
+              // Exit the application
+              // app.exit(1)
+  
+              break;
+          }
+        }, 5000)
+        // console.log("key1 ++++++++", key1)
+        // const code = validateLicenseKey(key, key1);
+        // console.log("code ", code);
+
+        // switch (code) {
+        //   case "VALID":
+        //     // Close the license gate window
+        //     gateWindow.close();
+
+        //     // Create our main window
+        //     createWindow();
+
+        //     // fs.writeFileSync("licence.txt", "sudhanshu", (err) => {
+        //     //   if (err) {
+        //     //     console.log("error");
+        //     //   }
+        //     // });
+
+        //     break;
+        //   case "ERROR":
+        //     const choice = await dialog.showMessageBox(gateWindow, {
+        //       type: "error",
+        //       title: "Your license is invalid",
+        //       message:
+        //         "The license key you entered does not exist for this product. Would you like to buy a license?",
+        //       detail: `Error code: ${code ?? res.status}`,
+        //       buttons: ["Continue evaluation", "Try again", "Buy a license"],
+        //     });
+        //     // Exit the application
+        //     // app.exit(1)
+
+        //     break;
+        // }
+      });
+
+      // TODO(ezekg) Create main window for valid licenses
     }
-  })
- 
-  mainWindow.loadFile('index.html')
-}
+    app.whenReady().then(() => gateCreateWindowWithLicense(createWindow));
+  }
+};
 
-
-async function gateCreateWindowWithLicense(createWindow) { 
-    const gateWindow = new BrowserWindow({
-      resizable: false,
-      frame: false,
-      width: 420,
-      height: 200,
-      webPreferences: {
-        preload: path.join(__dirname, 'gate.js'),
-        devTools: isDev,
-      },
-    })
-   
-    gateWindow.loadFile('gate.html')
-   
-    if (isDev) {
-      gateWindow.webContents.openDevTools({ mode: 'detach' })
-    }
-
-    ipcMain.on('GATE_SUBMIT', async (_event, { key }) => { 
-        const code = await validateLicenseKey(key) 
- 
-            switch (code) {
-                case 'VALID':
-                // Close the license gate window
-                gateWindow.close()
-
-                // Create our main window
-                createWindow()
-
-                break
-                case 'ERROR':
-
-                    const choice = await dialog.showMessageBox(gateWindow, {
-                        type: 'error',
-                        title: 'Your license is invalid',
-                        message: 'The license key you entered does not exist for this product. Would you like to buy a license?',
-                        detail: `Error code: ${code ?? res.status}`,
-                        buttons: [
-                          'Continue evaluation',
-                          'Try again',
-                          'Buy a license',
-                        ],
-                      })
-                // Exit the application
-                // app.exit(1)
-
-                break
-            }
-      }) 
-   
-    // TODO(ezekg) Create main window for valid licenses
-  } 
- 
 // app.whenReady().then(() => createWindow());
-app.whenReady().then(() => gateCreateWindowWithLicense(createWindow));
- 
-app.on('window-all-closed', () => app.quit())
+
+testing();
+
+app.on("window-all-closed", () => app.quit());

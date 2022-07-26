@@ -1,32 +1,38 @@
 const express = require("express");
 const router = express.Router();
-const Plant = require("../services/plant.service");
+const PlantService = require("../services/plant.service");
+const Plant = require("../models/plant.model");
+const fs = require("fs");
 
-router.use("/check", checkData = async(req, res) => {
-        console.log(req.body);
-        console.log(req.params);
-        console.log(req.query);
 
-        Plant.checkDataService(req.body.plantId)
+exports.check = async() => {
+        // console.log("body", req.body);
+        // console.log("params", req.params);
+        // console.log("query", req.query);
+        console.log("---------------");
+        
 
+        let data = fs.readFileSync("./licence.json", "utf-8");
+        console.log("++++++++++++", data);
+        let result = JSON.parse(data);
+
+        PlantService.checkDataService(result.key)
         .then((response)=>{
-            console.log(response)
+            console.log("response++++++", response)
             if(!response.status){
                 throw new Error(response.message); 
             }     
-            res.status(200).json({
-                message: true,
-                response: response.response
-            })
+            // res.status(200).json({
+            //     message: true,
+            //     response: response.response
+            // })
         })
         .catch((err)=>{
             console.log(err);
-            res.status(401).json({
-                status: false,
-                message: err.message
-            });
+            // res.status(401).json({
+            //     status: false,
+            //     message: err.message
+            // });
         });
     
-})
-
-module.exports = router;
+}
